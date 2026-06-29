@@ -1,50 +1,51 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 
 public class NotesController : ControllerBase
 {
-    private static readonly List<Note> _notes = new()
+    private readonly AppDbContext _db;
+
+    public NotesController(AppDbContext db)
     {
-        new Note { Id =1, Title = "Groceries" , Body = "Milk and eggs"},
-        new Note { Id =2, Title = "workout", Body ="Run 5Km"}
-    };
+        _db = db;
+    }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Note>> GetAll()
+    public async Task<ActionResult<IEnumerable<Note>>> GetAll()
     {
-        return Ok(_notes);
+        var notes = await _db.Notes.ToListAsync();
+        return Ok(notes);
     }
 
     [HttpGet("{id}")]
-    public ActionResult<Note> GetById(int id)
+    public async Task<ActionResult<Note>> GetById(int id)
     {
-     var note = _notes.FirstOrDefault(n => n.Id == id);
-     if(note is null)
-        {
-            return NotFound();
-        }  
-        return Ok(note); 
+     var note = await _db.Notes.FindAsync(id);
+
+        return note is null ? NotFound() : Ok(note);
     }
 
     [HttpPost]
-    public ActionResult<Note> Create(Note note)
+    public async Task<ActionResult<Note>> Create(Note note)
     {
-        note.Id = _notes.Count == 0 ? 1 : _notes.Max(n => n.Id) +1 ;
-        _notes.Add(note);
+        _db.Notes.Add(note);
+        await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new {id = note.Id}, note);
     }
     
     [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var note = _notes.FirstOrDefault(n => n.Id == id);
+        var note = await _db.Notes.FindAsync(id);
         if(note is null)
         {
             return NotFound();
         }
-        _notes.Remove(note);
+        _db.Notes.Remove(note);
+        await _db.SaveChangesAsync();
         return NoContent();
     }
 }
