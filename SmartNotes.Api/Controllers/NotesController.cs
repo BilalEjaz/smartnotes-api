@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -29,8 +30,17 @@ public class NotesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Note>> Create(Note note)
+    public async Task<ActionResult<Note>> Create(CreateNoteDto dto)
     {
+
+        static string Clean(string s) => Regex.Replace(s.Trim(), @"\s+", " "); 
+        var note = new Note
+        {
+            Title = Clean(dto.Title),
+            Body = Clean(dto.Body),
+            IsPinned = dto.IsPinned,
+            Reminder = dto.Reminder?.Trim()
+        };
         _db.Notes.Add(note);
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetById), new {id = note.Id}, note);
