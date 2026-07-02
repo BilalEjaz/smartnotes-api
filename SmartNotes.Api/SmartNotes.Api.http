@@ -5,7 +5,7 @@ GET {{host}}/api/notes
 Accept: application/json
 
 ### Get one note by id
-GET {{host}}/api/notes/1
+GET {{host}}/api/notes/2
 Accept: application/json
 
 ### Create a note
@@ -13,9 +13,9 @@ POST {{host}}/api/notes
 Content-Type: application/json
 
 {
-  "title": "keep sending  notes     and see what happens   ",
+  "title": "keep sending  notes via service    and see what happens   ",
   "body": "This one should live in SQL Server"
 }
 
 ### Delete a note by id
-DELETE {{host}}/api/notes/1
+DELETE {{host}}/api/notes/2

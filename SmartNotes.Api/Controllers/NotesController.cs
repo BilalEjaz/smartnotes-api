@@ -7,24 +7,27 @@ using System.Text.RegularExpressions;
 
 public class NotesController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly INoteService _noteService;
 
-    public NotesController(AppDbContext db)
+   // private readonly AppDbContext _db;
+
+    public NotesController(INoteService noteService)
     {
-        _db = db;
+        _noteService = noteService;
     }
+    
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Note>>> GetAll()
     {
-        var notes = await _db.Notes.ToListAsync();
+        var notes = await _noteService.GetAllNotesAsync();
         return Ok(notes);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Note>> GetById(int id)
     {
-     var note = await _db.Notes.FindAsync(id);
+     var note = await _noteService.GetNoteByIdAsync(id);
 
         return note is null ? NotFound() : Ok(note);
     }
@@ -33,29 +36,14 @@ public class NotesController : ControllerBase
     public async Task<ActionResult<Note>> Create(CreateNoteDto dto)
     {
 
-        static string Clean(string s) => Regex.Replace(s.Trim(), @"\s+", " "); 
-        var note = new Note
-        {
-            Title = Clean(dto.Title),
-            Body = Clean(dto.Body),
-            IsPinned = dto.IsPinned,
-            Reminder = dto.Reminder?.Trim()
-        };
-        _db.Notes.Add(note);
-        await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new {id = note.Id}, note);
+       var note = await _noteService.CreateNoteAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = note.Id }, note);
     }
     
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var note = await _db.Notes.FindAsync(id);
-        if(note is null)
-        {
-            return NotFound();
-        }
-        _db.Notes.Remove(note);
-        await _db.SaveChangesAsync();
-        return NoContent();
+        var deleted = await _noteService.DeleteNoteAsync(id);
+        return deleted ? NoContent() : NotFound();
     }
 }
