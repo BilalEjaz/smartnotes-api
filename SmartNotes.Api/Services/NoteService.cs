@@ -43,5 +43,20 @@ public class NoteService : INoteService
         await _db.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> UpdateNoteAsync(int id, CreateNoteDto dto)
+    {
+        var note = await _db.Notes.FindAsync(id);
+        if (note is null)
+        {
+            return false;
+        }
+        note.Title = Clean(dto.Title);
+        note.Body = Clean(dto.Body);
+        note.IsPinned = dto.IsPinned;
+        note.Reminder = dto.Reminder?.Trim();
+        await _db.SaveChangesAsync();
+        return true;
+    }
     private static string Clean(string s) => Regex.Replace(s.Trim(), @"\s+", " ");
 }

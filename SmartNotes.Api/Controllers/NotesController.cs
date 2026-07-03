@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Text.RegularExpressions;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -45,5 +43,12 @@ public class NotesController : ControllerBase
     {
         var deleted = await _noteService.DeleteNoteAsync(id);
         return deleted ? NoContent() : NotFound();
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, CreateNoteDto dto)
+    {
+        var updated = await _noteService.UpdateNoteAsync(id, dto);
+        return updated ? NoContent() : NotFound();
     }
 }

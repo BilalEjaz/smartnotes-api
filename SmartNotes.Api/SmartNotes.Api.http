@@ -19,3 +19,13 @@ Content-Type: application/json
 
 ### Delete a note by id
 DELETE {{host}}/api/notes/2
+
+### Update a note by id
+PUT {{host}}/api/notes/3
+Content-Type: application/json
+
+{
+"title": "Updated title",
+  "body": "Updated note this new one "
+
+}
