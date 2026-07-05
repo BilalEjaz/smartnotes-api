@@ -1,0 +1,10 @@
+<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin: 8px 0;">
+    <h4>@Title @(IsPinned ? "📌" : "")</h4>
+     <p>@Body</p>
+     </div>
+
+     @code{
+       [Parameter] public string Title { get; set; } = "";
+        [Parameter] public string Body { get; set; } = "";
+        [Parameter] public bool IsPinned { get; set; }
+     }
