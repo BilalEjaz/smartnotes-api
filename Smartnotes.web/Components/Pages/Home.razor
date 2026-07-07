@@ -1,7 +1,36 @@
 ﻿@page "/"
+@rendermode InteractiveServer 
 
 <h1>SmartNotes</h1>
 
-<Notecard Title="Groceries" Body="Milk and eggs" IsPinned="true" />
-<Notecard Title="Workout" Body="Run 5km" />
-<Notecard Title="Ideas" Body="Build the SmartNotes frontend" />
+<input placeholder="Title" @bind="newTitle" />
+<input placeholder="Body" @bind="newBody" />
+<button class="btn btn-primary" @onclick="AddNote">Add</button>
+
+@foreach (var note in notes)
+{
+    <Notecard Title="@note.Title" Body="@note.Body" IsPinned="@note.IsPinned"
+              OnDelete="() => RemoveNote(note)" />
+}
+
+@code {
+    private List<NoteModel> notes = new();
+    private string newTitle = "";
+    private string newBody = "";
+
+    protected override void OnInitialized()
+    {
+        notes.Add(new NoteModel { Title = "Groceries", Body = "Milk and eggs", IsPinned = true });
+        notes.Add(new NoteModel { Title = "Workout", Body = "Run 5km" });
+    }
+
+    private void AddNote()
+    {
+        if (string.IsNullOrWhiteSpace(newTitle)) return;   // guard clause, Day 7 reflex
+        notes.Add(new NoteModel { Title = newTitle, Body = newBody });
+        newTitle = "";
+        newBody = "";
+    }
+
+    private void RemoveNote(NoteModel note) => notes.Remove(note);
+}

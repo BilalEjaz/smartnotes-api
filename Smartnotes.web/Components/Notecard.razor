@@ -8,3 +8,11 @@
         [Parameter] public string Body { get; set; } = "";
         [Parameter] public bool IsPinned { get; set; }
      }
+
+<button class="btn btn-sm btn-outline-danger" @onclick="() => OnDelete.InvokeAsync()">
+    Delete
+</button>
+
+@code {
+    [Parameter] public EventCallback OnDelete { get; set; }   // the doorbell socket
+}
