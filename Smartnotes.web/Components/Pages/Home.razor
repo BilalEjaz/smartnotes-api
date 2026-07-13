@@ -1,36 +1,98 @@
-﻿@page "/"
-@rendermode InteractiveServer 
+@page "/"
+@rendermode InteractiveServer
+@inject NotesApiClient Api
 
 <h1>SmartNotes</h1>
 
+@if (errorMessage is not null)
+{
+    <p style="color: #b00020;">@errorMessage</p>
+}
+
 <input placeholder="Title" @bind="newTitle" />
 <input placeholder="Body" @bind="newBody" />
-<button class="btn btn-primary" @onclick="AddNote">Add</button>
+<button class="btn btn-primary" @onclick="AddNoteAsync">Add</button>
 
-@foreach (var note in notes)
+@if (notes is null)
 {
-    <Notecard Title="@note.Title" Body="@note.Body" IsPinned="@note.IsPinned"
-              OnDelete="() => RemoveNote(note)" />
+    @* null means "the courier has not come back yet" *@
+    <p><em>Loading notes...</em></p>
+}
+else if (notes.Count == 0)
+{
+    @* empty list means "the courier came back with an empty box" *@
+    <p>No notes yet. Add your first one above.</p>
+}
+else
+{
+    @foreach (var note in notes)
+    {
+        <Notecard Title="@note.Title" Body="@note.Body" IsPinned="@note.IsPinned"
+                  OnDelete="() => RemoveNoteAsync(note)" />
+    }
 }
 
 @code {
-    private List<NoteModel> notes = new();
+    // null = still loading. new() = loaded but empty. Different meanings!
+    private List<NoteModel>? notes;
     private string newTitle = "";
     private string newBody = "";
+    private string? errorMessage;
 
-    protected override void OnInitialized()
+    // Async lifecycle hook: runs when the component starts, awaits the API.
+    protected override async Task OnInitializedAsync()
     {
-        notes.Add(new NoteModel { Title = "Groceries", Body = "Milk and eggs", IsPinned = true });
-        notes.Add(new NoteModel { Title = "Workout", Body = "Run 5km" });
+        try
+        {
+            notes = await Api.GetNotesAsync();
+        }
+        catch (HttpRequestException)
+        {
+            errorMessage = "Could not reach the SmartNotes API. Is it running?";
+            notes = new();   // stop showing "Loading..." forever
+        }
     }
 
-    private void AddNote()
+    private async Task AddNoteAsync()
     {
-        if (string.IsNullOrWhiteSpace(newTitle)) return;   // guard clause, Day 7 reflex
-        notes.Add(new NoteModel { Title = newTitle, Body = newBody });
+        // UI guard mirrors the API's validation rules (Title AND Body required)
+        if (string.IsNullOrWhiteSpace(newTitle) || string.IsNullOrWhiteSpace(newBody))
+        {
+            errorMessage = "Both a title and a body are required.";
+            return;
+        }
+
+        var created = await Api.CreateNoteAsync(new CreateNoteRequest
+        {
+            Title = newTitle,
+            Body = newBody
+        });
+
+        if (created is null)
+        {
+            errorMessage = "The API rejected the note (validation failed?).";
+            return;
+        }
+
+        // We add the note the API RETURNED, not our local draft:
+        // the returned one carries the real database id (the Day 13 lesson!).
+        notes?.Add(created);
         newTitle = "";
         newBody = "";
+        errorMessage = null;
     }
 
-    private void RemoveNote(NoteModel note) => notes.Remove(note);
+    private async Task RemoveNoteAsync(NoteModel note)
+    {
+        var deleted = await Api.DeleteNoteAsync(note.Id);
+
+        if (deleted)
+        {
+            notes?.Remove(note);
+        }
+        else
+        {
+            errorMessage = "Delete failed. The note may already be gone.";
+        }
+    }
 }
